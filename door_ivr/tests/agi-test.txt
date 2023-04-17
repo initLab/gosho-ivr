@@ -1,0 +1,24 @@
+agi_callerid: 0881234567  # the fauna does the normalization
+
+200
+200
+200
+200 result=49  # start entering pin
+200 result=50
+200 result=51
+200 result=52
+200 result=53
+200 result=54
+200 result=0
+200 result=49  # open door 1
+200 result=0  # ack opening door audio
+200 result=0  # ack door number
+200 result=0  # ack door opened audio
+200 result=50  # unlock and open door 2
+200 result=0  # ack opening door audio
+200 result=0  # ack door number
+200 result=0  # ack door opened audio
+200 result=57  # lock all
+200 result=0  # ack opening locked audio
+200 result=0  # ack door locked audio
+200           # hangup
