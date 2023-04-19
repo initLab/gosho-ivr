@@ -1,15 +1,15 @@
-# Gosho IVR
+# initLab Telephony
 
 Repo containing the initLab's IVR telephony system, which enables opening of doors.
 
-The name Gosho comes from the name of initLab's new gatekeeper https://github.com/initlab/gosho .
+This was codenamed `gosho-ivr` due to being able to open the initlab doors.
 
 
 ## Install
 
 
 ```
-git clone https://github.com/initlab/gosho-ivr /var/lib/asterisk/gosho-ivr
+git clone https://github.com/initlab/initlab-telephony /var/lib/asterisk/gosho-ivr
 
 cd /var/lib/asterisk/gosho-ivr
 python -m vevn .venv
@@ -33,3 +33,4 @@ service asterisk restart
 
 - Upload tick-tock wav (we might end up changing the tune).
 - Document in a better way and automate.
+- Remove references to `gosho-ivr`
