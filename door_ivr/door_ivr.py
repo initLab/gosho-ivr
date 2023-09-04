@@ -32,7 +32,8 @@ class DoorManager(AGI):
 
         config = configparser.ConfigParser()
         config.read(config_filename)
-        self.backend_api_url = config['backend']['api_url']
+        self.auth_backend_api_url = config['backend']['auth_api_url']
+        self.door_backend_api_url = config['backend']['door_api_url']
         self.backend_access_secret = config['backend']['access_secret']
         self.asterisk_fallback_extension_var = config['asterisk']['fallback_extension_var']
         self.asterisk_fallback_extension = config['asterisk']['fallback_extension']
@@ -48,7 +49,7 @@ class DoorManager(AGI):
         :raises ValueError: on any exception
         """
         try:
-            response = requests.post(f"{self.backend_api_url}/phone_access/phone_number_token",
+            response = requests.post(f"{self.auth_backend_api_url}/phone_access/phone_number_token",
                                      data={
                                          'secret': self.backend_access_secret,
                                          'phone_number': self.phone_number,
@@ -73,7 +74,7 @@ class DoorManager(AGI):
 
     def is_correct_pin(self, pin: str) -> bool:
         try:
-            response = requests.post(f"{self.backend_api_url}/phone_access/verify_pin",
+            response = requests.post(f"{self.auth_backend_api_url}/phone_access/verify_pin",
                                      data={'pin': pin},
                                      headers={'Authorization': f"Bearer {self.backend_auth_token}"})
             response.raise_for_status()
@@ -122,7 +123,7 @@ class DoorManager(AGI):
             return
 
         try:
-            response = requests.get(f"{self.backend_api_url}/doors",
+            response = requests.get(f"{self.door_backend_api_url}/doors",
                                     headers={'Authorization': f"Bearer {self.backend_auth_token}"})
             response.raise_for_status()
             doors = response.json()
@@ -163,7 +164,7 @@ class DoorManager(AGI):
                     try:
                         self.stream_file('locking_doors')
                         for door_id in lockable_door_ids:
-                            response = requests.post(f"{self.backend_api_url}/doors/{door_id}/lock",
+                            response = requests.post(f"{self.door_backend_api_url}/doors/{door_id}/lock",
                                                      headers={'Authorization': f"Bearer {self.backend_auth_token}"})
                             response.raise_for_status()
                         # Ideally we would wait until the door is confirmed to be locked,
@@ -183,7 +184,7 @@ class DoorManager(AGI):
                 try:
                     for action in [DOOR_UNLOCK, DOOR_OPEN]:
                         if action in door['supported_actions']:
-                            response = requests.post(f"{self.backend_api_url}/doors/{door['id']}/{action}",
+                            response = requests.post(f"{self.door_backend_api_url}/doors/{door['id']}/{action}",
                                                      headers={'Authorization': f"Bearer {self.backend_auth_token}"})
                             response.raise_for_status()
                     self.stream_file('door_opened')
