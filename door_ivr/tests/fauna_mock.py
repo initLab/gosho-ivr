@@ -12,7 +12,7 @@ import http.server
 import re
 import socketserver
 
-PORT = 3001
+PORT = 3002
 
 
 class FaunaHandler(http.server.BaseHTTPRequestHandler):
