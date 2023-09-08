@@ -136,9 +136,19 @@ class DoorManager(AGI):
             self.hangup()
             return
 
-        # this is a bit of a hack, but otherwise we have to use names
+        # backwards compatible if not all doors have numbers 1-8
+        available_numbers = set(range(1, 9))
+        free_numbers = iter(sorted(available_numbers - set(door.get('number', -1) for door in doors)))
+
+        doors_map = {
+           door.get('number') if door.get('number') in available_numbers else next(free_numbers) : door
+           for door in doors
+        }
+
+        assert len(doors) == len(doors_map), 'There are door number duplicates!'
+
         door_action_choices = [
-            str(i) for i, door in enumerate(doors, start=1)
+            str(door_number) for door_number, door in doors_map.items()
             if {DOOR_UNLOCK, DOOR_OPEN}.intersection(set(door['supported_actions']))
         ] + ['9']
 
@@ -180,7 +190,7 @@ class DoorManager(AGI):
             else:
                 self.stream_file('opening_door')
                 self.say_digits(choice)
-                door = doors[int(choice) - 1]
+                door = doors_map[int(choice)]
                 try:
                     for action in [DOOR_UNLOCK, DOOR_OPEN]:
                         if action in door['supported_actions']:
