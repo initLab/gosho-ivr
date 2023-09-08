@@ -1,4 +1,4 @@
-agi_callerid: 0881234567  # the fauna does the normalization
+agi_callerid: 0881234567  # the backend does the normalization
 
 200
 200

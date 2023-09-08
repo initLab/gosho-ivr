@@ -26,6 +26,16 @@ service asterisk restart
 # to debug asterisk -rvvv
 ```
 
+## Testing
+
+```
+cd door_ivr/door_ivr/
+python backend_mock.py &
+./run-test.sh agi-test.txt
+./run-test.sh agi-unknown-number.txt
+./run-test.sh -  # for local testing
+```
+
 ## TODOs:
 
 - Upload tick-tock wav (we might end up changing the tune).

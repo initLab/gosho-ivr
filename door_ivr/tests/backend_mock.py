@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Mock http server of fauna.initlab.org's door API.
+Mock http server of {fauna|portier}.initlab.org's door API.
 
 Written without any dependencies as the intention is to be standalone.
 """
@@ -39,11 +39,16 @@ class FaunaHandler(http.server.BaseHTTPRequestHandler):
         print('POST data:', post_data)
         door_action_re = re.compile(r"/api/doors/[^/]+/(open|lock|unlock)")
         if self.path == '/api/phone_access/phone_number_token':
-            self.send_response(http.HTTPStatus.OK)
-            self.end_headers()
-            self.wfile.write(
-                b'{"user":{"name":"admin"},"auth_token":{"token":"abc","expires_at":"2044-04-01T00:00:00.000Z"}}'
-            )
+            if post_data.endswith(b'880000000'):  # hack to have a not-found result
+                self.send_response(http.HTTPStatus.NOT_FOUND)
+                self.end_headers()
+                self.wfile.write(b'{}')  # the response body is not inline with the backend
+            else:
+                self.send_response(http.HTTPStatus.OK)
+                self.end_headers()
+                self.wfile.write(
+                    b'{"user":{"name":"admin"},"auth_token":{"token":"abc","expires_at":"2044-04-01T00:00:00.000Z"}}'
+                )
         elif self.path == '/api/phone_access/verify_pin':
             self.send_response(http.HTTPStatus.OK)
             self.end_headers()
