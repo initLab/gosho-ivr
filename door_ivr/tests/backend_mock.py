@@ -24,9 +24,9 @@ class FaunaHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(
                 json.dumps(
                     [
-                        {'id': 'example_door', 'name': 'Врата', 'supported_actions': ['open']},
-                        {'id': 'example_door_2', 'name': 'Врата 2', 'supported_actions': ['open', 'unlock', 'lock']},
-                        {'id': 'example_door_3', 'name': 'Врата 3', 'supported_actions': ['lock', 'unlock', 'open']},
+                        {'id': 'example_door', 'name': 'Врата', 'supported_actions': ['open'], 'number': 1},
+                        {'id': 'example_door_2', 'name': 'Врата 2', 'supported_actions': ['open', 'unlock', 'lock'], 'number': 2},
+                        {'id': 'example_door_3', 'name': 'Врата 3', 'supported_actions': ['lock', 'unlock', 'open'], 'number': 3},
                     ],
                     indent=4
                 ).encode('utf-8')
