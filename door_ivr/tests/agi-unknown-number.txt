@@ -3,3 +3,6 @@ agi_callerid: +359880000000
 200
 200
 200
+200 result=101  # get fallback extension
+200 result=0
+200  # set extension (redirecting to normal phone)

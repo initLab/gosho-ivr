@@ -1,3 +1,11 @@
 #/bin/bash
 
-(cat "$1" | sed 's/#.*//'; cat) | python ../door_ivr.py --config=../door_ivr.test.conf
+# Interact with the door_ivr.py
+# Usage:
+#   ./run-test.sh -    # for stdin
+#   ./run-test.sh test-file.txt
+#   ./run-test.sh test-file.txt -  # for test file and stdin
+
+set +o pipefail -e
+
+(cat $@ | sed 's/#.*//') | python ../door_ivr.py --config=../door_ivr.test.conf
