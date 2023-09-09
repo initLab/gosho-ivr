@@ -38,5 +38,4 @@ python backend_mock.py &
 
 ## TODOs:
 
-- Upload tick-tock wav (we might end up changing the tune).
 - Document in a better way and automate.

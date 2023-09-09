@@ -1,4 +1,5 @@
 *.wav
+!/sounds/files/clock_tick_tock_src.wav
 .venv
 .*.swp
 .idea
