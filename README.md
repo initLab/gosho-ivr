@@ -12,11 +12,11 @@ cd /var/lib/asterisk/initlab-telephony
 python3 -m venv .venv
 
 . .venv/bin/activate
-# cd /var/lib/asterisk/initlab-telephony/door_ivr; pip install -r requirements.txt  # FIXME: pyst2 needs patches
+# cd /var/lib/asterisk/initlab-telephony/door_ivr/; pip install -r requirements.txt  # FIXME: pyst2 needs patches
 
 cd /var/lib/asterisk/initlab-telephony/sounds/; ./generate-messages.sh
 
-cp door_ivr/door_ivr.example.conf door_ivr/door_ivr.conf
+cd /var/lib/asterisk/initlab-telephony/; cp door_ivr/door_ivr.example.conf door_ivr/door_ivr.conf
 # edit door_ivr/door_ivr.conf
 
 for x in /var/lib/asterisk/initlab-telephony/sounds/files/*; do ln -s "$x" /usr/share/asterisk/sounds/en_US_f_Allison/; done
