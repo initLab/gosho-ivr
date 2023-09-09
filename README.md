@@ -9,7 +9,7 @@ Repo containing the initLab's IVR telephony system, which enables opening of doo
 git clone https://github.com/initlab/initlab-telephony /var/lib/asterisk/initlab-telephony
 
 cd /var/lib/asterisk/initlab-telephony
-python -m vevn .venv
+python -m venv .venv
 
 . .venv/bin/activate
 # pip install -r requirements.txt  # FIXME: pyst2 needs patches
