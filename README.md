@@ -19,6 +19,7 @@ cd /var/lib/asterisk/initlab-telephony/sounds/; ./generate-messages.sh
 cd /var/lib/asterisk/initlab-telephony/; cp door_ivr/door_ivr.example.conf door_ivr/door_ivr.conf
 # edit door_ivr/door_ivr.conf
 
+# directory /usr/share/asterisk/sounds/en_US_f_Allison/ is usually owned by root, so you might need to run this in a root shell
 for x in /var/lib/asterisk/initlab-telephony/sounds/files/*; do ln -s "$x" /usr/share/asterisk/sounds/en_US_f_Allison/; done
 
 # add entries in extensions.conf to /etc/asterisk/extensions.conf
