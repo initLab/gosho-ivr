@@ -13,7 +13,7 @@ import typing
 import requests
 import requests.exceptions
 
-from asterisk.agi import AGI
+from asterisk.agi import AGI, AGIAppError
 
 
 ALLOWED_CODE_ENTERING_ATTEMPTS_COUNT = 3
@@ -209,7 +209,10 @@ def main():
     parser.add_argument('--config', help='location of the configuration file', default='door_ivr.conf')
     args = parser.parse_args()
     door_manager = DoorManager(phone_number=args.phone, config_filename=args.config)
-    door_manager.handle_phone_call()
+    try:
+        door_manager.handle_phone_call()
+    except AGIAppError:
+        pass  # this is probably a hangup
 
 
 if __name__ == '__main__':
