@@ -1,0 +1,8 @@
+services:
+  asterisk-initlab-telephony:
+    build:
+      context: .
+      dockerfile: ./docker/initlab-telephony-demo.dockerfile
+    ports:
+      - 127.0.0.1:5060:5060/tcp
+      - 127.0.0.1:5060:5060/udp

@@ -36,7 +36,7 @@ class FaunaHandler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         post_data = self.rfile.read(int(self.headers['content-length']))
-        print('POST data:', post_data)
+        print('POST data:', post_data, flush=True)
         door_action_re = re.compile(r"/api/doors/[^/]+/(open|lock|unlock)")
         if self.path == '/api/phone_access/phone_number_token':
             if post_data.endswith(b'880000000'):  # hack to have a not-found result

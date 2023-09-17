@@ -29,6 +29,8 @@ service asterisk restart
 
 ## Testing
 
+### Automatic Tests
+
 ```
 cd door_ivr/door_ivr/
 python backend_mock.py &
@@ -36,6 +38,12 @@ python backend_mock.py &
 ./run-test.sh agi-unknown-number.txt
 ./run-test.sh -  # for local testing
 ```
+
+### Manual Testing
+
+- run `docker compose up --build` - this will start a docker asterisk instance (port 5060/tcp) that has a mock backend and IVR config
+- use a SIP application to connect `sip:0881234567@127.0.0.1:5060(tcp)` with password `1234` (see `docker/initlab-telephony-demo.dockerfile` ) and dial `ivr`
+  - if you want to hear the sound you might need to substitute `127.0.0.1` with the address of the docker container
 
 ## TODOs:
 
