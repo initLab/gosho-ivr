@@ -1,4 +1,4 @@
-*.wav
+/door_ivr/door_ivr.conf
+/.idea
 .venv
 .*.swp
-.idea
