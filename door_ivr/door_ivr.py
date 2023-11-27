@@ -13,6 +13,8 @@ import typing
 import requests
 import requests.exceptions
 
+import os
+
 from asterisk.agi import AGI
 
 
@@ -41,6 +43,10 @@ class DoorManager(AGI):
 
         self.phone_number = phone_number or self.env['agi_callerid']
 
+        self.sounds_path = os.getcwd() + '/initlab-telephony-assets/files'
+        # default locale for unknown or unauthorized calls
+        self.user_locale = 'bg'
+
     def get_auth_token(self) -> typing.Optional[str]:
         """
         Return an OAuth token representing the user with the phone in question
@@ -61,9 +67,29 @@ class DoorManager(AGI):
         except (requests.exceptions.RequestException, KeyError) as exc:
             raise ValueError(exc) from exc
 
+    def get_user_locale(self) -> str:
+        try:
+            response = requests.get(f"{self.auth_backend_api_url}/current_user", headers={
+                'Authorization': f"Bearer {self.backend_auth_token}"
+            })
+            response.raise_for_status()
+            return response.json()['locale']
+        except (requests.exceptions.RequestException, KeyError) as exc:
+            raise ValueError(exc) from exc
+
+    def stream_file_assets(self, filename, escape_digits='', sample_offset=0):
+        return self.stream_file(self.sounds_path + '/' + filename, escape_digits, sample_offset)
+
+    def stream_file_i18n(self, filename, escape_digits='', sample_offset=0):
+        return self.stream_file_assets(self.user_locale + '/' + filename, escape_digits, sample_offset)
+
+    def end_call(self):
+        self.stream_file_i18n('goodbye')
+        self.hangup()
+
     def prompt_for_pin(self) -> str:
         pin = ''
-        next_digit = self.stream_file('enter_pin', escape_digits=list(range(10)))  # '' is returned on non input
+        next_digit = self.stream_file_i18n('enter_pin', escape_digits=list(range(10)))  # '' is returned on non input
         pin += next_digit
         while len(pin) < PIN_LENGTH:
             next_digit = self.wait_for_digit(4000 if len(pin) else 12000)  # we give a bit more time for the first digit
@@ -88,16 +114,21 @@ class DoorManager(AGI):
             try:
                 pin = self.prompt_for_pin()
             except ValueError:
-                self.stream_file('wrong')  # maybe we need to differentiate between the two?
+                self.stream_file_i18n('wrong')  # maybe we need to differentiate between the two?
             else:
                 if self.is_correct_pin(pin):
                     return True
                 else:
-                    self.stream_file('wrong')
+                    self.stream_file_i18n('wrong')
 
     def handle_phone_call(self):
         is_bulfon = self.get_variable('bulfon') not in {'', '0'}
         self.verbose('Door IVR received a call from %r (is_bulfon=%s)' % (self.phone_number, is_bulfon), level=1)
+
+        if not os.path.isdir(self.sounds_path):
+            self.verbose('Assets not found at %s. Please install them first' % (self.sounds_path))
+            self.hangup()
+            return
 
         self.answer()
         time.sleep(1)  # if we don't sleep the first part of the next audio file is skipped
@@ -106,20 +137,25 @@ class DoorManager(AGI):
             self.backend_auth_token = self.get_auth_token()
         except ValueError as e:
             self.verbose('Getting auth failed for %r - %r' % (self.phone_number, e))
-            self.stream_file('service_unavailable')
-            self.hangup()
+            self.stream_file_i18n('welcome')
+            self.stream_file_i18n('service_unavailable')
+            self.end_call()
             return
 
         if self.backend_auth_token is None:
             # phone number is unknown
             fallback_extension = self.get_variable(self.asterisk_fallback_extension_var) \
                                  or str(self.asterisk_fallback_extension)
-            self.stream_file('redirecting_to_public_phone')
+            self.stream_file_i18n('welcome')
+            self.stream_file_i18n('redirecting_to_public_phone')
             self.set_extension(fallback_extension)
             return
 
+        self.user_locale = self.get_user_locale()
+        self.stream_file_i18n('welcome')
+
         if not self.user_knows_the_pin():
-            self.hangup()
+            self.end_call()
             return
 
         try:
@@ -128,12 +164,12 @@ class DoorManager(AGI):
             response.raise_for_status()
             doors = response.json()
             if not any(door['supported_actions'] for door in doors):
-                self.stream_file('insufficient_permissions')
-                self.hangup()
+                self.stream_file_i18n('insufficient_permissions')
+                self.end_call()
         except (requests.exceptions.RequestException, KeyError) as exc:
             self.verbose('Error getting door properties - %r' % exc)
-            self.stream_file('service_unavailable')
-            self.hangup()
+            self.stream_file_i18n('service_unavailable')
+            self.end_call()
             return
 
         # backwards compatible if not all doors have numbers 1-8
@@ -154,42 +190,43 @@ class DoorManager(AGI):
 
         while True:  # timeout handled inside
             # TODO: consider getting the door statuses when there is an API for this
-            choice = self.control_stream_file('door_command_prompt', door_action_choices)
+            # TODO: split door command prompt into seperate files, speak only the authorized ones
+            choice = self.stream_file_i18n('door_command_prompt', door_action_choices)
             if not choice:
-                choice = self.control_stream_file('waiting_on_input', escape_digits=list(map(str, range(10))))
+                choice = self.stream_file_assets('waiting_on_input', escape_digits=list(map(str, range(10))))
                 # for some reason wait_for_digit didn't work for 5 min...
             if not choice:
-                self.stream_file('goodbye')
-                self.hangup()
+                self.end_call()
                 return
 
             if choice not in door_action_choices:
                 # wrong choice
-                self.stream_file('wrong_choice')
+                self.stream_file_i18n('wrong_choice')
             elif choice == '9':
                 lockable_door_ids = [door['id'] for door in doors if DOOR_LOCK in door['supported_actions']]
                 if not lockable_door_ids:
-                    self.stream_file('lock_failed')
+                    self.stream_file_i18n('lock_failed')
                 else:
                     try:
-                        self.stream_file('locking_doors')
+                        self.stream_file_i18n('locking_doors')
                         for door_id in lockable_door_ids:
                             response = requests.post(f"{self.door_backend_api_url}/doors/{door_id}/lock",
                                                      headers={'Authorization': f"Bearer {self.backend_auth_token}"})
                             response.raise_for_status()
                         # Ideally we would wait until the door is confirmed to be locked,
                         # however, there is no such API at the moment.
-                        self.stream_file('door_locked')
-                        self.hangup()  # nothing more to do - let's save some actions for the user
+                        self.stream_file_i18n('door_locked')
+                        self.end_call()  # nothing more to do - let's save some actions for the user
                         return
                     except requests.exceptions.RequestException as exc:
                         # TODO: check that all doors are locked when there is an API
                         self.verbose('Error locking doors - %r' % exc)
-                        self.stream_file('action_unsuccessful')
+                        self.stream_file_i18n('action_unsuccessful')
                         # we don't want to hang up - the user can retry
             else:
-                self.stream_file('opening_door')
-                self.say_digits(choice)
+                self.stream_file_i18n('opening_door')
+                # TODO: say door name instead
+                # self.say_digits(choice)
                 door = doors_map[int(choice)]
                 try:
                     for action in [DOOR_UNLOCK, DOOR_OPEN]:
@@ -197,14 +234,14 @@ class DoorManager(AGI):
                             response = requests.post(f"{self.door_backend_api_url}/doors/{door['id']}/{action}",
                                                      headers={'Authorization': f"Bearer {self.backend_auth_token}"})
                             response.raise_for_status()
-                    self.stream_file('door_opened')
+                    self.stream_file_i18n('door_opened')
                 except requests.exceptions.RequestException as exc:
                     self.verbose('Error opening the door %r - %r' % (door, exc))
-                    self.stream_file('action_unsuccessful')
+                    self.stream_file_i18n('action_unsuccessful')
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Initlab door IVR AGI script')
+    parser = argparse.ArgumentParser(description='init Lab door IVR AGI script')
     parser.add_argument('--phone', help='phone number (default to getting it from caller id)', default=None)
     parser.add_argument('--config', help='location of the configuration file', default='door_ivr.conf')
     args = parser.parse_args()
