@@ -175,7 +175,7 @@ class DoorManager(AGI):
         free_numbers = iter(sorted(available_numbers - set(door.get('number', -1) for door in doors)))
 
         doors_map = {
-           door.get('number') if door.get('number') in available_numbers else next(free_numbers) : door
+           door.get('number') if door.get('number') in available_numbers else next(free_numbers): door
            for door in doors
         }
 
@@ -188,7 +188,7 @@ class DoorManager(AGI):
 
         while True:  # timeout handled inside
             # TODO: consider getting the door statuses when there is an API for this
-            # TODO: split door command prompt into seperate files, speak only the authorized ones
+            # TODO: split door command prompt into separate files, speak only the authorized ones
             choice = self.stream_file_i18n('door_command_prompt', door_action_choices)
             if not choice:
                 choice = self.stream_file_asset('waiting_on_input', escape_digits=list(map(str, range(10))))
