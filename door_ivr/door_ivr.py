@@ -5,8 +5,6 @@ initLab door IVR AGI script
 
 import argparse
 import configparser
-import math
-import re
 import time
 import typing
 
