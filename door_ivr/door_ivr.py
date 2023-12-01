@@ -11,7 +11,7 @@ import typing
 import requests
 import requests.exceptions
 
-import os
+from pathlib import Path
 
 from asterisk.agi import AGI
 
@@ -41,7 +41,7 @@ class DoorManager(AGI):
 
         self.phone_number = phone_number or self.env['agi_callerid']
 
-        self.sounds_path = os.getcwd() + '/initlab-telephony-assets/files'
+        self.sounds_path = Path.cwd().joinpath('initlab-telephony-assets/files')
         # default locale for unknown or unauthorized calls
         self.user_locale = 'bg'
 
@@ -75,11 +75,11 @@ class DoorManager(AGI):
         except (requests.exceptions.RequestException, KeyError) as exc:
             raise ValueError(exc) from exc
 
-    def stream_file_assets(self, filename, escape_digits='', sample_offset=0):
-        return self.stream_file(self.sounds_path + '/' + filename, escape_digits, sample_offset)
+    def stream_file_asset(self, filename, escape_digits='', sample_offset=0):
+        return self.stream_file(self.sounds_path.joinpath('/' + filename), escape_digits, sample_offset)
 
     def stream_file_i18n(self, filename, escape_digits='', sample_offset=0):
-        return self.stream_file_assets(self.user_locale + '/' + filename, escape_digits, sample_offset)
+        return self.stream_file_asset(self.user_locale + '/' + filename, escape_digits, sample_offset)
 
     def end_call(self):
         self.stream_file_i18n('goodbye')
@@ -123,8 +123,8 @@ class DoorManager(AGI):
         is_bulfon = self.get_variable('bulfon') not in {'', '0'}
         self.verbose('Door IVR received a call from %r (is_bulfon=%s)' % (self.phone_number, is_bulfon), level=1)
 
-        if not os.path.isdir(self.sounds_path):
-            self.verbose('Assets not found at %s. Please install them first' % (self.sounds_path))
+        if not Path.is_dir(self.sounds_path):
+            self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
             self.hangup()
             return
 
@@ -191,7 +191,7 @@ class DoorManager(AGI):
             # TODO: split door command prompt into seperate files, speak only the authorized ones
             choice = self.stream_file_i18n('door_command_prompt', door_action_choices)
             if not choice:
-                choice = self.stream_file_assets('waiting_on_input', escape_digits=list(map(str, range(10))))
+                choice = self.stream_file_asset('waiting_on_input', escape_digits=list(map(str, range(10))))
                 # for some reason wait_for_digit didn't work for 5 min...
             if not choice:
                 self.end_call()
