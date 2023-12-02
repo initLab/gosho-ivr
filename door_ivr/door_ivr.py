@@ -76,10 +76,10 @@ class DoorManager(AGI):
             raise ValueError(exc) from exc
 
     def stream_file_asset(self, filename, escape_digits='', sample_offset=0):
-        return self.stream_file(self.sounds_path.joinpath('/' + filename), escape_digits, sample_offset)
+        return self.stream_file(str(self.sounds_path.joinpath(filename)), escape_digits, sample_offset)
 
     def stream_file_i18n(self, filename, escape_digits='', sample_offset=0):
-        return self.stream_file_asset(self.user_locale + '/' + filename, escape_digits, sample_offset)
+        return self.stream_file_asset(Path(self.user_locale).joinpath(filename), escape_digits, sample_offset)
 
     def end_call(self):
         self.stream_file_i18n('goodbye')
