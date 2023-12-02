@@ -164,6 +164,7 @@ class DoorManager(AGI):
             if not any(door['supported_actions'] for door in doors):
                 self.stream_file_i18n('insufficient_permissions')
                 self.end_call()
+                return
         except (requests.exceptions.RequestException, KeyError) as exc:
             self.verbose('Error getting door properties - %r' % exc)
             self.stream_file_i18n('service_unavailable')
