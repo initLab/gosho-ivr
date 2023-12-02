@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-initLab door IVR AGI script
+init Lab door IVR AGI script
 """
 
 import argparse
