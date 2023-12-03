@@ -135,7 +135,7 @@ class DoorManager(AGI):
                     return True
                 else:
                     self.pin = ''
-                    self.stream_file_i18n('wrong_pin')
+                    self.stream_and_capture_pin_digit('wrong_pin')
 
     def handle_phone_call(self):
         is_bulfon = self.get_variable('bulfon') not in {'', '0'}
