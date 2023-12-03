@@ -134,6 +134,7 @@ class DoorManager(AGI):
                 if self.is_correct_pin():
                     return True
                 else:
+                    self.pin = ''
                     self.stream_file_i18n('wrong_pin')
 
     def handle_phone_call(self):
