@@ -204,8 +204,11 @@ class DoorManager(AGI):
 
         while True:  # timeout handled inside
             # TODO: consider getting the door statuses when there is an API for this
-            # TODO: split door command prompt into separate files, speak only the authorized ones
-            choice = self.stream_file_i18n('door_command_prompt', escape_digits=door_action_choices)
+            choice = ''
+            for door_number in door_action_choices:
+                if not choice:
+                    choice = self.stream_file_i18n('door_prompt_' + door_number, escape_digits=door_action_choices)
+
             if not choice:
                 choice = self.stream_file_asset('waiting_on_input', escape_digits=door_action_choices)
                 # for some reason wait_for_digit didn't work for 5 min...
@@ -213,10 +216,7 @@ class DoorManager(AGI):
                 self.end_call()
                 return
 
-            if choice not in door_action_choices:
-                # wrong choice
-                self.stream_file_i18n('wrong_choice')
-            elif choice == '9':
+            if choice == '9':
                 lockable_door_ids = [door['id'] for door in doors if DOOR_LOCK in door['supported_actions']]
                 if not lockable_door_ids:
                     self.stream_file_i18n('lock_failed')
