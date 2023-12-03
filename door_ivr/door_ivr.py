@@ -77,6 +77,11 @@ class DoorManager(AGI):
         except (requests.exceptions.RequestException, KeyError) as exc:
             raise ValueError(exc) from exc
 
+    def perform_door_action(self, door_id, action):
+        response = requests.post(f"{self.door_backend_api_url}/doors/{door_id}/{action}",
+                                 headers={'Authorization': f"Bearer {self.backend_auth_token}"})
+        response.raise_for_status()
+
     def stream_file_asset(self, filename, escape_digits='', sample_offset=0):
         return self.stream_file(str(self.sounds_path.joinpath(filename)), escape_digits, sample_offset)
 
@@ -224,9 +229,7 @@ class DoorManager(AGI):
                     try:
                         self.stream_file_i18n('locking_doors')
                         for door_id in lockable_door_ids:
-                            response = requests.post(f"{self.door_backend_api_url}/doors/{door_id}/lock",
-                                                     headers={'Authorization': f"Bearer {self.backend_auth_token}"})
-                            response.raise_for_status()
+                            self.perform_door_action(door_id, 'lock')
                         # Ideally we would wait until the door is confirmed to be locked,
                         # however, there is no such API at the moment.
                         self.stream_file_i18n('door_locked')
@@ -243,9 +246,7 @@ class DoorManager(AGI):
                 try:
                     for action in [DOOR_UNLOCK, DOOR_OPEN]:
                         if action in door['supported_actions']:
-                            response = requests.post(f"{self.door_backend_api_url}/doors/{door['id']}/{action}",
-                                                     headers={'Authorization': f"Bearer {self.backend_auth_token}"})
-                            response.raise_for_status()
+                            self.perform_door_action(door['id'], action)
                     self.stream_file_i18n('door_opened')
                 except requests.exceptions.RequestException as exc:
                     self.verbose('Error opening the door %r - %r' % (door, exc))
