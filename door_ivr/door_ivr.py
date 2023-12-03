@@ -161,6 +161,7 @@ class DoorManager(AGI):
             self.stream_file_i18n('welcome')
             self.stream_file_i18n('redirecting_to_public_phone')
             self.set_extension(fallback_extension)
+            self.set_priority(1)
             return
 
         self.user_locale = self.get_user_locale()
