@@ -112,12 +112,12 @@ class DoorManager(AGI):
             try:
                 pin = self.prompt_for_pin()
             except ValueError:
-                self.stream_file_i18n('wrong')  # maybe we need to differentiate between the two?
+                self.stream_file_i18n('pin_entry_timed_out')  # maybe we need to differentiate between the two?
             else:
                 if self.is_correct_pin(pin):
                     return True
                 else:
-                    self.stream_file_i18n('wrong')
+                    self.stream_file_i18n('wrong_pin')
 
     def handle_phone_call(self):
         is_bulfon = self.get_variable('bulfon') not in {'', '0'}
