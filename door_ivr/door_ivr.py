@@ -18,6 +18,7 @@ from asterisk.agi import AGI
 
 ALLOWED_CODE_ENTERING_ATTEMPTS_COUNT = 3
 PIN_LENGTH = 6
+PIN_DIGITS = list(range(10))
 
 # door actions
 DOOR_UNLOCK = 'unlock'
@@ -44,6 +45,7 @@ class DoorManager(AGI):
         self.sounds_path = Path.cwd().joinpath('initlab-telephony-assets/files')
         # default locale for unknown or unauthorized calls
         self.user_locale = 'bg'
+        self.pin = ''
 
     def get_auth_token(self) -> typing.Optional[str]:
         """
@@ -81,25 +83,39 @@ class DoorManager(AGI):
     def stream_file_i18n(self, filename, escape_digits='', sample_offset=0):
         return self.stream_file_asset(Path(self.user_locale).joinpath(filename), escape_digits, sample_offset)
 
+    def stream_and_capture_pin_digit(self, filename):
+        next_digit = self.stream_file_i18n(filename, escape_digits=PIN_DIGITS)
+        # '' is returned on non input
+        if len(next_digit) > 0:
+            self.pin += next_digit
+
+    def answer_and_wait(self):
+        self.answer()
+        time.sleep(1)  # if we don't sleep the first part of the next audio file is skipped
+
     def end_call(self):
         self.stream_file_i18n('goodbye')
         self.hangup()
 
-    def prompt_for_pin(self) -> str:
-        pin = ''
-        next_digit = self.stream_file_i18n('enter_pin', escape_digits=list(range(10)))  # '' is returned on non input
-        pin += next_digit
-        while len(pin) < PIN_LENGTH:
-            next_digit = self.wait_for_digit(4000 if len(pin) else 12000)  # we give a bit more time for the first digit
+    def answer_wait_greet_stream_and_end_call(self, filename):
+        self.answer_and_wait()
+        self.stream_file_i18n('welcome')
+        self.stream_file_i18n(filename)
+        self.end_call()
+
+    def prompt_for_pin(self):
+        self.stream_and_capture_pin_digit('enter_pin')
+        while len(self.pin) < PIN_LENGTH:
+            # we give a bit more time for the first digit
+            next_digit = self.wait_for_digit(4000 if len(self.pin) else 12000)
             if not next_digit:
                 raise ValueError("Failed to enter pin within the timeout")
-            pin += next_digit
-        return pin
+            self.pin += next_digit
 
-    def is_correct_pin(self, pin: str) -> bool:
+    def is_correct_pin(self) -> bool:
         try:
             response = requests.post(f"{self.auth_backend_api_url}/phone_access/verify_pin",
-                                     data={'pin': pin},
+                                     data={'pin': self.pin},
                                      headers={'Authorization': f"Bearer {self.backend_auth_token}"})
             response.raise_for_status()
             return response.json()['pin'] == 'valid'
@@ -110,51 +126,43 @@ class DoorManager(AGI):
     def user_knows_the_pin(self) -> bool:
         for attempt_number in range(ALLOWED_CODE_ENTERING_ATTEMPTS_COUNT):
             try:
-                pin = self.prompt_for_pin()
+                self.prompt_for_pin()
             except ValueError:
-                self.stream_file_i18n('pin_entry_timed_out')  # maybe we need to differentiate between the two?
+                # pin entry timed out, enter_pin message will be played again
+                self.pin = ''
             else:
-                if self.is_correct_pin(pin):
+                if self.is_correct_pin():
                     return True
                 else:
                     self.stream_file_i18n('wrong_pin')
 
     def handle_phone_call(self):
         is_bulfon = self.get_variable('bulfon') not in {'', '0'}
-        self.verbose('Door IVR received a call from %r (is_bulfon=%s)' % (self.phone_number, is_bulfon), level=1)
+        self.verbose('Door IVR received a call from %r (is_bulfon=%s)' % (self.phone_number, is_bulfon))
 
         if not Path.is_dir(self.sounds_path):
             self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
             self.hangup()
             return
 
-        self.answer()
-        time.sleep(1)  # if we don't sleep the first part of the next audio file is skipped
-
         try:
             self.backend_auth_token = self.get_auth_token()
         except ValueError as e:
             self.verbose('Getting auth failed for %r - %r' % (self.phone_number, e))
-            self.stream_file_i18n('welcome')
-            self.stream_file_i18n('service_unavailable')
-            self.end_call()
+            self.answer_wait_greet_stream_and_end_call('service_unavailable')
             return
 
         if self.backend_auth_token is None:
             # phone number is unknown
             fallback_extension = self.get_variable(self.asterisk_fallback_extension_var) \
                                  or str(self.asterisk_fallback_extension)
+            self.answer_and_wait()
             self.stream_file_i18n('welcome')
             self.stream_file_i18n('redirecting_to_public_phone')
             self.set_extension(fallback_extension)
             return
 
         self.user_locale = self.get_user_locale()
-        self.stream_file_i18n('welcome')
-
-        if not self.user_knows_the_pin():
-            self.end_call()
-            return
 
         try:
             response = requests.get(f"{self.door_backend_api_url}/doors",
@@ -162,12 +170,17 @@ class DoorManager(AGI):
             response.raise_for_status()
             doors = response.json()
             if not any(door['supported_actions'] for door in doors):
-                self.stream_file_i18n('insufficient_permissions')
-                self.end_call()
+                self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
                 return
         except (requests.exceptions.RequestException, KeyError) as exc:
             self.verbose('Error getting door properties - %r' % exc)
-            self.stream_file_i18n('service_unavailable')
+            self.answer_wait_greet_stream_and_end_call('service_unavailable')
+            return
+
+        self.answer_and_wait()
+        self.stream_and_capture_pin_digit('welcome')
+
+        if not self.user_knows_the_pin():
             self.end_call()
             return
 
@@ -190,9 +203,9 @@ class DoorManager(AGI):
         while True:  # timeout handled inside
             # TODO: consider getting the door statuses when there is an API for this
             # TODO: split door command prompt into separate files, speak only the authorized ones
-            choice = self.stream_file_i18n('door_command_prompt', door_action_choices)
+            choice = self.stream_file_i18n('door_command_prompt', escape_digits=door_action_choices)
             if not choice:
-                choice = self.stream_file_asset('waiting_on_input', escape_digits=list(map(str, range(10))))
+                choice = self.stream_file_asset('waiting_on_input', escape_digits=door_action_choices)
                 # for some reason wait_for_digit didn't work for 5 min...
             if not choice:
                 self.end_call()
@@ -224,8 +237,6 @@ class DoorManager(AGI):
                         # we don't want to hang up - the user can retry
             else:
                 self.stream_file_i18n('opening_door')
-                # TODO: say door name instead
-                # self.say_digits(choice)
                 door = doors_map[int(choice)]
                 try:
                     for action in [DOOR_UNLOCK, DOOR_OPEN]:
