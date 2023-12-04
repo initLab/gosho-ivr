@@ -18,7 +18,7 @@ from asterisk.agi import AGI
 
 ALLOWED_CODE_ENTERING_ATTEMPTS_COUNT = 3
 PIN_LENGTH = 6
-PIN_DIGITS = list(range(10))
+DIGITS = list(range(10))
 
 # door actions
 DOOR_UNLOCK = 'unlock'
@@ -89,7 +89,7 @@ class DoorManager(AGI):
         return self.stream_file_asset(Path(self.user_locale).joinpath(filename), escape_digits, sample_offset)
 
     def stream_and_capture_pin_digit(self, filename):
-        next_digit = self.stream_file_i18n(filename, escape_digits=PIN_DIGITS)
+        next_digit = self.stream_file_i18n(filename, escape_digits=DIGITS)
         # '' is returned on non input
         if len(next_digit) > 0:
             self.pin += next_digit
@@ -209,19 +209,22 @@ class DoorManager(AGI):
 
         while True:  # timeout handled inside
             # TODO: consider getting the door statuses when there is an API for this
-            choice = ''
+            selection = ''
             for door_number in door_action_choices:
-                if not choice:
-                    choice = self.stream_file_i18n('door_prompt_' + door_number, escape_digits=door_action_choices)
+                if not selection:
+                    selection = self.stream_file_i18n('door_prompt_' + door_number, escape_digits=door_action_choices)
 
-            if not choice:
-                choice = self.stream_file_asset('waiting_on_input', escape_digits=door_action_choices)
+            if not selection:
+                selection = self.stream_file_asset('waiting_on_input', escape_digits=DIGITS)
                 # for some reason wait_for_digit didn't work for 5 min...
-            if not choice:
+            if not selection:
                 self.end_call()
                 return
 
-            if choice == '9':
+            if selection not in door_action_choices:
+                # wrong selection
+                self.stream_file_i18n('wrong_selection')
+            elif selection == '9':
                 lockable_door_ids = [door['id'] for door in doors if DOOR_LOCK in door['supported_actions']]
                 if not lockable_door_ids:
                     self.stream_file_i18n('lock_failed')
@@ -242,7 +245,7 @@ class DoorManager(AGI):
                         # we don't want to hang up - the user can retry
             else:
                 self.stream_file_i18n('opening_door')
-                door = doors_map[int(choice)]
+                door = doors_map[int(selection)]
                 try:
                     for action in [DOOR_UNLOCK, DOOR_OPEN]:
                         if action in door['supported_actions']:
