@@ -82,10 +82,10 @@ class DoorManager(AGI):
                                  headers={'Authorization': f"Bearer {self.backend_auth_token}"})
         response.raise_for_status()
 
-    def stream_file_asset(self, filename, escape_digits: typing.Union[str, list[int]] = '', sample_offset=0):
+    def stream_file_asset(self, filename, escape_digits: typing.Union[str, typing.List[int]] = '', sample_offset=0):
         return self.stream_file(str(self.sounds_path.joinpath(filename)), escape_digits, sample_offset)
 
-    def stream_file_i18n(self, filename, escape_digits: typing.Union[str, list[int]] = '', sample_offset=0):
+    def stream_file_i18n(self, filename, escape_digits: typing.Union[str, typing.List[int]] = '', sample_offset=0):
         return self.stream_file_asset(Path(self.user_locale).joinpath(filename), escape_digits, sample_offset)
 
     def stream_and_capture_pin_digit(self, filename):
