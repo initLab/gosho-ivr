@@ -82,10 +82,10 @@ class DoorManager(AGI):
                                  headers={'Authorization': f"Bearer {self.backend_auth_token}"})
         response.raise_for_status()
 
-    def stream_file_asset(self, filename, escape_digits='', sample_offset=0):
+    def stream_file_asset(self, filename, escape_digits: typing.Union[str, list[int]] = '', sample_offset=0):
         return self.stream_file(str(self.sounds_path.joinpath(filename)), escape_digits, sample_offset)
 
-    def stream_file_i18n(self, filename, escape_digits='', sample_offset=0):
+    def stream_file_i18n(self, filename, escape_digits: typing.Union[str, list[int]] = '', sample_offset=0):
         return self.stream_file_asset(Path(self.user_locale).joinpath(filename), escape_digits, sample_offset)
 
     def stream_and_capture_pin_digit(self, filename):
@@ -93,6 +93,8 @@ class DoorManager(AGI):
         # '' is returned on non input
         if len(next_digit) > 0:
             self.pin += next_digit
+
+        return next_digit
 
     def answer_and_wait(self):
         self.answer()
@@ -109,13 +111,15 @@ class DoorManager(AGI):
         self.end_call()
 
     def prompt_for_pin(self):
-        self.stream_and_capture_pin_digit('enter_pin')
-        while len(self.pin) < PIN_LENGTH:
+        next_digit = self.stream_and_capture_pin_digit('enter_pin')
+        while next_digit != '#':
             # we give a bit more time for the first digit
             next_digit = self.wait_for_digit(4000 if len(self.pin) else 12000)
             if not next_digit:
                 raise ValueError("Failed to enter pin within the timeout")
             self.pin += next_digit
+
+        self.pin = self.pin.rstrip('#')
 
     def is_correct_pin(self) -> bool:
         try:
