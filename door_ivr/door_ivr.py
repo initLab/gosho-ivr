@@ -42,7 +42,7 @@ class DoorManager(AGI):
 
         self.phone_number = phone_number or self.env['agi_callerid']
 
-        self.sounds_path = Path.cwd().joinpath('initlab-telephony-assets/files')
+        self.sounds_path = Path.cwd().joinpath('initlab-telephony-assets', 'files')
         # default locale for unknown or unauthorized calls
         self.user_locale = 'bg'
         self.pin = ''
