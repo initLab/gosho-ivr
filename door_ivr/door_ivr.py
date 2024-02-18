@@ -234,7 +234,6 @@ class DoorManager(AGI):
                     self.stream_file_i18n('lock_failed')
                 else:
                     try:
-                        self.stream_file_i18n('locking_doors')
                         for door_id in lockable_door_ids:
                             self.perform_door_action(door_id, 'lock')
                         # Ideally we would wait until the door is confirmed to be locked,
@@ -248,13 +247,12 @@ class DoorManager(AGI):
                         self.stream_file_i18n('action_unsuccessful')
                         # we don't want to hang up - the user can retry
             else:
-                self.stream_file_i18n('opening_door')
                 door = doors_map[int(selection)]
                 try:
                     for action in [DOOR_UNLOCK, DOOR_OPEN]:
                         if action in door['supported_actions']:
                             self.perform_door_action(door['id'], action)
-                    self.stream_file_i18n('door_opened')
+                    self.stream_file_i18n('door_opened_' + selection)
                 except requests.exceptions.RequestException as exc:
                     self.verbose('Error opening the door %r - %r' % (door, exc))
                     self.stream_file_i18n('action_unsuccessful')
