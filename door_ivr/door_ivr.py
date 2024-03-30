@@ -5,6 +5,7 @@ init Lab door IVR AGI script
 import abc
 import argparse
 import configparser
+import re
 import time
 import typing
 
@@ -337,10 +338,33 @@ class InternalPhoneDoorManager(AbstractDoorManager):
         self.handle_choices_menu(doors)
 
 
+class InCallDoorManager(AbstractDoorManager):
+
+    def handle_phone_call(self):
+        channel = self.env['agi_channel']  # e.g., "SIP/bigroom-0000002"
+        door_id = self.phone_number  # FIXME: this is a hack
+        self.verbose("Door IVR called in-call by %r for door %s" % (channel, door_id))
+
+        match = re.fullmatch('SIP/(.+)-.+', channel)
+        self.phone_number = match.group(1) if match else None
+
+        self.phone_number = self.config['internal_phones_mapping'].get(self.phone_number, None)
+
+        if not self.phone_number:
+            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
+            return
+
+        self.backend_auth_token = self.get_auth_token()
+        doors = self.get_doors()
+        doors_map = {str(door.get('number')): door for door in doors}
+        self.perform_door_action(doors_map[door_id]['id'], DOOR_OPEN)
+        self.stream_file_i18n(f'door_opened_{door_id}')
+
+
 def main():
     parser = argparse.ArgumentParser(description='init Lab door IVR AGI script')
     parser.add_argument('--config', help='location of the configuration file', required=True)
-    parser.add_argument('--handler', choices=['external', 'payphone', 'internal'],
+    parser.add_argument('--handler', choices=['external', 'payphone', 'internal', 'in-call'],
                         help='handler to use - one of %(choices)s',
                         required=True)
     parser.add_argument('--phone', help='phone number (default to getting it from caller id)', default=None)
@@ -349,6 +373,7 @@ def main():
         'external': ExternalPhoneDoorManager,
         'payphone': PayphoneDoorManager,
         'internal': InternalPhoneDoorManager,
+        'in-call': InCallDoorManager,
     }[args.handler]
     assert issubclass(door_manager_class, AbstractDoorManager)
     door_manager = door_manager_class(phone_number=args.phone, config_filename=args.config)
