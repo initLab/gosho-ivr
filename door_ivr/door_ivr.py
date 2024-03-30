@@ -17,7 +17,6 @@ from asterisk.agi import AGI
 
 
 ALLOWED_CODE_ENTERING_ATTEMPTS_COUNT = 3
-PIN_LENGTH = 6
 DIGITS = list(range(10))
 
 # door actions
@@ -67,6 +66,17 @@ class DoorManager(AGI):
         except (requests.exceptions.RequestException, KeyError) as exc:
             raise ValueError(exc) from exc
 
+    def is_correct_pin(self) -> bool:
+        try:
+            response = requests.post(f"{self.auth_backend_api_url}/phone_access/verify_pin",
+                                     data={'pin': self.pin},
+                                     headers={'Authorization': f"Bearer {self.backend_auth_token}"})
+            response.raise_for_status()
+            return response.json()['pin'] == 'valid'
+        except (requests.exceptions.RequestException, KeyError) as exc:
+            self.verbose('Error verifying pin - %r' % exc)
+            return False
+
     def get_user_locale(self) -> str:
         try:
             response = requests.get(f"{self.auth_backend_api_url}/current_user", headers={
@@ -74,6 +84,16 @@ class DoorManager(AGI):
             })
             response.raise_for_status()
             return response.json()['locale']
+        except (requests.exceptions.RequestException, KeyError) as exc:
+            raise ValueError(exc) from exc
+
+    def get_doors(self):
+        try:
+            response = requests.get(f"{self.door_backend_api_url}/doors", headers={
+                'Authorization': f"Bearer {self.backend_auth_token}"
+            })
+            response.raise_for_status()
+            return response.json()
         except (requests.exceptions.RequestException, KeyError) as exc:
             raise ValueError(exc) from exc
 
@@ -121,17 +141,6 @@ class DoorManager(AGI):
 
         self.pin = self.pin.rstrip('#')
 
-    def is_correct_pin(self) -> bool:
-        try:
-            response = requests.post(f"{self.auth_backend_api_url}/phone_access/verify_pin",
-                                     data={'pin': self.pin},
-                                     headers={'Authorization': f"Bearer {self.backend_auth_token}"})
-            response.raise_for_status()
-            return response.json()['pin'] == 'valid'
-        except (requests.exceptions.RequestException, KeyError) as exc:
-            self.verbose('Error verifying pin - %r' % exc)
-            return False
-
     def user_knows_the_pin(self) -> bool:
         for attempt_number in range(ALLOWED_CODE_ENTERING_ATTEMPTS_COUNT):
             try:
@@ -146,70 +155,22 @@ class DoorManager(AGI):
                     self.pin = ''
                     self.stream_and_capture_pin_digit('wrong_pin')
 
-    def handle_phone_call(self):
-        is_bulfon = self.get_variable('bulfon') not in {'', '0'}
-        self.verbose('Door IVR received a call from %r (is_bulfon=%s)' % (self.phone_number, is_bulfon))
-
-        if not Path.is_dir(self.sounds_path):
-            self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
-            self.hangup()
-            return
-
-        try:
-            self.backend_auth_token = self.get_auth_token()
-        except ValueError as e:
-            self.verbose('Getting auth failed for %r - %r' % (self.phone_number, e))
-            self.answer_wait_greet_stream_and_end_call('service_unavailable')
-            return
-
-        if self.backend_auth_token is None:
-            # phone number is unknown
-            fallback_extension = self.get_variable(self.asterisk_fallback_extension_var) \
-                                 or str(self.asterisk_fallback_extension)
-            self.answer_and_wait()
-            self.stream_file_i18n('welcome')
-            self.stream_file_i18n('redirecting_to_public_phone')
-            self.set_extension(fallback_extension)
-            self.set_priority(1)
-            return
-
-        self.user_locale = self.get_user_locale()
-
-        try:
-            response = requests.get(f"{self.door_backend_api_url}/doors",
-                                    headers={'Authorization': f"Bearer {self.backend_auth_token}"})
-            response.raise_for_status()
-            doors = response.json()
-            if not any(door['supported_actions'] for door in doors):
-                self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
-                return
-        except (requests.exceptions.RequestException, KeyError) as exc:
-            self.verbose('Error getting door properties - %r' % exc)
-            self.answer_wait_greet_stream_and_end_call('service_unavailable')
-            return
-
-        self.answer_and_wait()
-        self.stream_and_capture_pin_digit('welcome')
-
-        if not self.user_knows_the_pin():
-            self.end_call()
-            return
-
+    def handle_choices_menu(self, doors):
         # backwards compatible if not all doors have numbers 1-8
         available_numbers = set(range(1, 9))
         free_numbers = iter(sorted(available_numbers - set(door.get('number', -1) for door in doors)))
 
         doors_map = {
-           door.get('number') if door.get('number') in available_numbers else next(free_numbers): door
-           for door in doors
+            door.get('number') if door.get('number') in available_numbers else next(free_numbers): door
+            for door in doors
         }
 
         assert len(doors) == len(doors_map), 'There are door number duplicates!'
 
         door_action_choices = [
-            str(door_number) for door_number, door in doors_map.items()
-            if {DOOR_UNLOCK, DOOR_OPEN}.intersection(set(door['supported_actions']))
-        ] + ['9']
+                                  str(door_number) for door_number, door in doors_map.items()
+                                  if {DOOR_UNLOCK, DOOR_OPEN}.intersection(set(door['supported_actions']))
+                              ] + ['9']
 
         while True:  # timeout handled inside
             # TODO: consider getting the door statuses when there is an API for this
@@ -256,6 +217,50 @@ class DoorManager(AGI):
                 except requests.exceptions.RequestException as exc:
                     self.verbose('Error opening the door %r - %r' % (door, exc))
                     self.stream_file_i18n('action_unsuccessful')
+
+    def handle_phone_call(self):
+        is_bulfon = self.get_variable('bulfon') not in {'', '0'}
+        self.verbose('Door IVR received a call from %r (is_bulfon=%s)' % (self.phone_number, is_bulfon))
+
+        if not Path.is_dir(self.sounds_path):
+            self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
+            self.hangup()
+            return
+
+        try:
+            self.backend_auth_token = self.get_auth_token()
+        except ValueError as e:
+            self.verbose('Getting auth failed for %r - %r' % (self.phone_number, e))
+            self.answer_wait_greet_stream_and_end_call('service_unavailable')
+            return
+
+        if self.backend_auth_token is None:
+            # phone number is unknown
+            fallback_extension = self.get_variable(self.asterisk_fallback_extension_var) \
+                                 or str(self.asterisk_fallback_extension)
+            self.answer_and_wait()
+            self.stream_file_i18n('welcome')
+            self.stream_file_i18n('redirecting_to_public_phone')
+            self.set_extension(fallback_extension)
+            self.set_priority(1)
+            return
+
+        self.user_locale = self.get_user_locale()
+
+        doors = self.get_doors()
+
+        if not any(door['supported_actions'] for door in doors):
+            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
+            return
+
+        self.answer_and_wait()
+        self.stream_and_capture_pin_digit('welcome')
+
+        if not self.user_knows_the_pin():
+            self.end_call()
+            return
+
+        self.handle_choices_menu(doors)
 
 
 def main():
