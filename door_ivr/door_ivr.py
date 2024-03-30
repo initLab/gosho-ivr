@@ -104,6 +104,13 @@ class AbstractDoorManager(AGI, abc.ABC):
                                  headers={'Authorization': f"Bearer {self.backend_auth_token}"})
         response.raise_for_status()
 
+    def check_assets_installed(self) -> bool:
+        if not Path.is_dir(self.sounds_path):
+            self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
+            self.hangup()
+            return False
+        return True
+
     def stream_file_asset(self, filename, escape_digits: typing.Union[str, typing.List[int]] = '', sample_offset=0):
         return self.stream_file(str(self.sounds_path.joinpath(filename)), escape_digits, sample_offset)
 
@@ -224,11 +231,9 @@ class AbstractDoorManager(AGI, abc.ABC):
 class ExternalPhoneDoorManager(AbstractDoorManager):
 
     def handle_phone_call(self):
-        self.verbose('Door IVR received a call from external phone %r' % self.phone_number)
+        self.verbose('External phone door IVR received a call from %r' % self.phone_number)
 
-        if not Path.is_dir(self.sounds_path):
-            self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
-            self.hangup()
+        if not self.check_assets_installed():
             return
 
         try:
@@ -270,34 +275,39 @@ class ExternalPhoneDoorManager(AbstractDoorManager):
 class PayphoneDoorManager(AbstractDoorManager):
 
     def handle_phone_call(self):
-        self.verbose("Door IVR received a call from Payphone")
+        self.verbose("Payphone door IVR received a call")
+
+        if not self.check_assets_installed():
+            return
 
         self.answer_and_wait()
+
         # get the phone number
-        digit = self.stream_and_capture_digit('welcome')
-        self.phone_number += digit
+        self.phone_number += self.stream_and_capture_digit('welcome')
         digit = self.stream_and_capture_digit('enter_phone')
         while digit != '#':
             self.phone_number += digit
             digit = self.wait_for_digit(12000)
 
+        self.verbose("Phone number %r entered on the payphone" % self.phone_number)
+
         try:
             self.backend_auth_token = self.get_auth_token()
-        except ValueError:
-            self.stream_file_i18n('insufficient_permissions')
+        except ValueError as e:
+            self.verbose('Getting auth failed for %r - %r' % (self.phone_number, e))
+            self.stream_file_i18n('service_unavailable')
             self.end_call()
             return
-
-        self.verbose("Phone %s entered on the payphone" % self.phone_number)
 
         self.user_locale = self.get_user_locale()
 
         doors = [
-            door for door in self.get_doors() if str(door['number']) == '1'
+            door for door in self.get_doors() if str(door['number']) != '2'
         ]
 
         if not any(door['supported_actions'] for door in doors):
-            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
+            self.stream_file_i18n('insufficient_permissions')
+            self.end_call()
             return
 
         if not self.user_knows_the_pin():
@@ -310,11 +320,9 @@ class PayphoneDoorManager(AbstractDoorManager):
 class InternalPhoneDoorManager(AbstractDoorManager):
 
     def handle_phone_call(self):
-        self.verbose("Door IVR received a call from internal phone %r" % self.phone_number)
+        self.verbose("Internal door IVR received a call from %r" % self.phone_number)
 
-        if not Path.is_dir(self.sounds_path):
-            self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
-            self.hangup()
+        if not self.check_assets_installed():
             return
 
         self.phone_number = self.config['internal_phones_mapping'].get(self.phone_number, None)
@@ -323,9 +331,11 @@ class InternalPhoneDoorManager(AbstractDoorManager):
             self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
             return
 
-        self.backend_auth_token = self.get_auth_token()
-        if not self.backend_auth_token:
-            self.answer_wait_greet_stream_and_end_call('action_unsuccessful')
+        try:
+            self.backend_auth_token = self.get_auth_token()
+        except ValueError as e:
+            self.verbose('Getting auth failed for %r - %r' % (self.phone_number, e))
+            self.answer_wait_greet_stream_and_end_call('service_unavailable')
             return
 
         doors = self.get_doors()
