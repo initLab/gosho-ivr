@@ -2,7 +2,7 @@
 """
 init Lab door IVR AGI script
 """
-
+import abc
 import argparse
 import configparser
 import time
@@ -17,6 +17,7 @@ from asterisk.agi import AGI
 
 
 ALLOWED_CODE_ENTERING_ATTEMPTS_COUNT = 3
+
 DIGITS = list(range(10))
 
 # door actions
@@ -25,18 +26,18 @@ DOOR_OPEN = 'open'
 DOOR_LOCK = 'lock'
 
 
-class DoorManager(AGI):
+class AbstractDoorManager(AGI, abc.ABC):
 
-    def __init__(self, phone_number: typing.Optional[str] = None, config_filename: str = 'door_ivr.conf'):
+    def __init__(self, config_filename: str, phone_number: typing.Optional[str] = None):
         super().__init__()
 
-        config = configparser.ConfigParser()
-        config.read(config_filename)
-        self.auth_backend_api_url = config['backend']['auth_api_url']
-        self.door_backend_api_url = config['backend']['door_api_url']
-        self.backend_access_secret = config['backend']['access_secret']
-        self.asterisk_fallback_extension_var = config['asterisk']['fallback_extension_var']
-        self.asterisk_fallback_extension = config['asterisk']['fallback_extension']
+        self.config = configparser.ConfigParser()
+        self.config.read(config_filename)
+        self.auth_backend_api_url = self.config['backend']['auth_api_url']
+        self.door_backend_api_url = self.config['backend']['door_api_url']
+        self.backend_access_secret = self.config['backend']['access_secret']
+        self.asterisk_fallback_extension_var = self.config['asterisk']['fallback_extension_var']
+        self.asterisk_fallback_extension = self.config['asterisk']['fallback_extension']
         self.backend_auth_token = None
 
         self.phone_number = phone_number or self.env['agi_callerid']
@@ -168,16 +169,17 @@ class DoorManager(AGI):
         assert len(doors) == len(doors_map), 'There are door number duplicates!'
 
         door_action_choices = [
-                                  str(door_number) for door_number, door in doors_map.items()
-                                  if {DOOR_UNLOCK, DOOR_OPEN}.intersection(set(door['supported_actions']))
-                              ] + ['9']
+            str(door_number) for door_number, door in doors_map.items()
+            if {DOOR_UNLOCK, DOOR_OPEN}.intersection(set(door['supported_actions']))
+        ] + ['9']
 
         while True:  # timeout handled inside
             # TODO: consider getting the door statuses when there is an API for this
             selection = ''
             for door_number in door_action_choices:
                 if not selection:
-                    selection = self.stream_file_i18n('door_prompt_' + door_number, escape_digits=door_action_choices)
+                    selection = self.stream_file_i18n('door_prompt_' + door_number,
+                                                      escape_digits=''.join(door_action_choices))
 
             if not selection:
                 selection = self.stream_file_asset('waiting_on_input', escape_digits=DIGITS)
@@ -218,9 +220,15 @@ class DoorManager(AGI):
                     self.verbose('Error opening the door %r - %r' % (door, exc))
                     self.stream_file_i18n('action_unsuccessful')
 
+    @abc.abstractmethod
     def handle_phone_call(self):
-        is_bulfon = self.get_variable('bulfon') not in {'', '0'}
-        self.verbose('Door IVR received a call from %r (is_bulfon=%s)' % (self.phone_number, is_bulfon))
+        raise NotImplemented
+
+
+class ExternalPhoneDoorManager(AbstractDoorManager):
+
+    def handle_phone_call(self):
+        self.verbose('Door IVR received a call from external phone %r' % self.phone_number)
 
         if not Path.is_dir(self.sounds_path):
             self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
@@ -263,12 +271,57 @@ class DoorManager(AGI):
         self.handle_choices_menu(doors)
 
 
+class PayphoneDoorManager(AbstractDoorManager):
+
+    pass
+
+
+class InternalPhoneDoorManager(AbstractDoorManager):
+
+    def handle_phone_call(self):
+        self.verbose("Door IVR received a call from internal phone %r" % self.phone_number)
+
+        if not Path.is_dir(self.sounds_path):
+            self.verbose('Assets not found at %s. Please install them first' % self.sounds_path)
+            self.hangup()
+            return
+
+        self.phone_number = self.config['internal_phones_mapping'].get(self.phone_number, None)
+
+        if not self.phone_number:
+            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
+            return
+
+        self.backend_auth_token = self.get_auth_token()
+        if not self.backend_auth_token:
+            self.answer_wait_greet_stream_and_end_call('action_unsuccessful')
+            return
+
+        doors = self.get_doors()
+
+        if not any(door['supported_actions'] for door in doors):
+            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
+            return
+
+        self.answer_and_wait()
+        self.handle_choices_menu(doors)
+
+
 def main():
     parser = argparse.ArgumentParser(description='init Lab door IVR AGI script')
+    parser.add_argument('--config', help='location of the configuration file', required=True)
+    parser.add_argument('--handler', choices=['external', 'payphone', 'internal'],
+                        help='handler to use - one of %(choices)s',
+                        required=True)
     parser.add_argument('--phone', help='phone number (default to getting it from caller id)', default=None)
-    parser.add_argument('--config', help='location of the configuration file', default='door_ivr.conf')
     args = parser.parse_args()
-    door_manager = DoorManager(phone_number=args.phone, config_filename=args.config)
+    door_manager_class = {
+        'external': ExternalPhoneDoorManager,
+        'payphone': PayphoneDoorManager,
+        'internal': InternalPhoneDoorManager,
+    }[args.handler]
+    assert issubclass(door_manager_class, AbstractDoorManager)
+    door_manager = door_manager_class(phone_number=args.phone, config_filename=args.config)
     door_manager.handle_phone_call()
 
 

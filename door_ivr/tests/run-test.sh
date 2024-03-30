@@ -8,4 +8,4 @@
 
 set +o pipefail -e
 
-(cat $@ | sed 's/#.*//') | python ../door_ivr.py --config=../door_ivr.test.conf
+(cat $@ | sed 's/#.*//') | python ../door_ivr.py --handler=external --config=../door_ivr.test.conf

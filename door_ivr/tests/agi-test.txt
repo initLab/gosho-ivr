@@ -1,15 +1,16 @@
 agi_callerid: 0881234567  # the backend does the normalization
 
-200
-200
-200
+200 result=1
+200 result=0
+200 result=0
+200 result=0
 200 result=49  # start entering pin
 200 result=50
 200 result=51
 200 result=52
 200 result=53
 200 result=54
-200 result=0
+200 result=35
 200 result=49  # open door 1
 200 result=0  # ack opening door audio
 200 result=0  # ack door number
