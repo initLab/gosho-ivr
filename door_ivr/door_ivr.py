@@ -109,13 +109,8 @@ class AbstractDoorManager(AGI, abc.ABC):
     def stream_file_i18n(self, filename, escape_digits: typing.Union[str, typing.List[int]] = '', sample_offset=0):
         return self.stream_file_asset(Path(self.user_locale).joinpath(filename), escape_digits, sample_offset)
 
-    def stream_and_capture_pin_digit(self, filename):
-        next_digit = self.stream_file_i18n(filename, escape_digits=DIGITS)
-        # '' is returned on non input
-        if len(next_digit) > 0:
-            self.pin += next_digit
-
-        return next_digit
+    def stream_and_capture_digit(self, filename):
+        return self.stream_file_i18n(filename, escape_digits=DIGITS)  # '' on no input
 
     def answer_and_wait(self):
         self.answer()
@@ -132,7 +127,8 @@ class AbstractDoorManager(AGI, abc.ABC):
         self.end_call()
 
     def prompt_for_pin(self):
-        next_digit = self.stream_and_capture_pin_digit('enter_pin')
+        next_digit = self.stream_and_capture_digit('enter_pin')
+        self.pin += next_digit
         while next_digit != '#':
             # we give a bit more time for the first digit
             next_digit = self.wait_for_digit(4000 if len(self.pin) else 12000)
@@ -153,8 +149,7 @@ class AbstractDoorManager(AGI, abc.ABC):
                 if self.is_correct_pin():
                     return True
                 else:
-                    self.pin = ''
-                    self.stream_and_capture_pin_digit('wrong_pin')
+                    self.pin = self.stream_and_capture_digit('wrong_pin')
 
     def handle_choices_menu(self, doors):
         # backwards compatible if not all doors have numbers 1-8
@@ -262,7 +257,7 @@ class ExternalPhoneDoorManager(AbstractDoorManager):
             return
 
         self.answer_and_wait()
-        self.stream_and_capture_pin_digit('welcome')
+        self.pin = self.stream_and_capture_digit('welcome')  # initialize pin
 
         if not self.user_knows_the_pin():
             self.end_call()
@@ -273,7 +268,40 @@ class ExternalPhoneDoorManager(AbstractDoorManager):
 
 class PayphoneDoorManager(AbstractDoorManager):
 
-    pass
+    def handle_phone_call(self):
+        self.verbose("Door IVR received a call from Payphone")
+
+        self.answer_and_wait()
+        # get the phone number
+        digit = self.stream_and_capture_digit('welcome')
+        self.phone_number += digit
+        digit = self.stream_and_capture_digit('enter_phone')
+        while digit != '#':
+            self.phone_number += digit
+            digit = self.wait_for_digit(12000)
+
+        try:
+            self.backend_auth_token = self.get_auth_token()
+        except ValueError:
+            self.stream_file_i18n('insufficient_permissions')
+            self.end_call()
+            return
+
+        self.user_locale = self.get_user_locale()
+
+        doors = [
+            door for door in self.get_doors() if str(door['number']) == '1'
+        ]
+
+        if not any(door['supported_actions'] for door in doors):
+            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
+            return
+
+        if not self.user_knows_the_pin():
+            self.end_call()
+            return
+
+        self.handle_choices_menu(doors)
 
 
 class InternalPhoneDoorManager(AbstractDoorManager):
