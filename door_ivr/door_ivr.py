@@ -287,6 +287,8 @@ class PayphoneDoorManager(AbstractDoorManager):
             self.end_call()
             return
 
+        self.verbose("Phone %s entered on the payphone" % self.phone_number)
+
         self.user_locale = self.get_user_locale()
 
         doors = [
