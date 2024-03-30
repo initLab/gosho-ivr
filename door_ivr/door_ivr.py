@@ -353,7 +353,7 @@ class InCallDoorManager(AbstractDoorManager):
     def handle_phone_call(self):
         channel = self.env['agi_channel']  # e.g., "SIP/bigroom-0000002"
         door_id = self.phone_number  # FIXME: this is a hack
-        self.verbose("Door IVR called in-call by %r for door %s" % (channel, door_id))
+        self.verbose("In-call door IVR received a call from %r for door %s" % (channel, door_id))
 
         match = re.fullmatch('SIP/(.+)-.+', channel)
         self.phone_number = match.group(1) if match else None
@@ -364,10 +364,28 @@ class InCallDoorManager(AbstractDoorManager):
             self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
             return
 
-        self.backend_auth_token = self.get_auth_token()
+        try:
+            self.backend_auth_token = self.get_auth_token()
+        except ValueError as e:
+            self.verbose('Getting auth failed for %r - %r' % (self.phone_number, e))
+            self.answer_wait_greet_stream_and_end_call('service_unavailable')
+            return
+
         doors = self.get_doors()
+
+        if not any(door['supported_actions'] for door in doors):
+            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
+            return
+
         doors_map = {str(door.get('number')): door for door in doors}
-        self.perform_door_action(doors_map[door_id]['id'], DOOR_OPEN)
+
+        try:
+            self.perform_door_action(doors_map[door_id]['id'], DOOR_OPEN)
+        except requests.exceptions.RequestException as exc:
+            self.verbose('Error opening the door %r - %r' % (doors_map[door_id], exc))
+            self.stream_file_i18n('action_unsuccessful')
+            return
+
         self.stream_file_i18n(f'door_opened_{door_id}')
 
 
