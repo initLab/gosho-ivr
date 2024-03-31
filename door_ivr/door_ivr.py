@@ -301,10 +301,6 @@ class PayphoneDoorManager(AbstractDoorManager):
 
         self.user_locale = self.get_user_locale()
 
-        doors = [
-            door for door in self.get_doors() if str(door['number']) != '2'
-        ]
-
         if not any(door['supported_actions'] for door in doors):
             self.stream_file_i18n('insufficient_permissions')
             self.end_call()
