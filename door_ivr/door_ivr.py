@@ -299,7 +299,18 @@ class PayphoneDoorManager(AbstractDoorManager):
             self.end_call()
             return
 
+        if self.backend_auth_token is None:
+            # phone number is unknown
+            fallback_extension = self.get_variable(self.asterisk_fallback_extension_var) \
+                                 or str(self.asterisk_fallback_extension)
+            self.stream_file_i18n('redirecting_to_public_phone')
+            self.set_extension(fallback_extension)
+            self.set_priority(1)
+            return
+
         self.user_locale = self.get_user_locale()
+
+        doors = self.get_doors()
 
         if not any(door['supported_actions'] for door in doors):
             self.stream_file_i18n('insufficient_permissions')
@@ -334,6 +345,11 @@ class InternalPhoneDoorManager(AbstractDoorManager):
             self.answer_wait_greet_stream_and_end_call('service_unavailable')
             return
 
+        if self.backend_auth_token is None:
+            # phone number is unknown
+            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
+            return
+
         doors = self.get_doors()
 
         if not any(door['supported_actions'] for door in doors):
@@ -365,6 +381,11 @@ class InCallDoorManager(AbstractDoorManager):
         except ValueError as e:
             self.verbose('Getting auth failed for %r - %r' % (self.phone_number, e))
             self.answer_wait_greet_stream_and_end_call('service_unavailable')
+            return
+
+        if self.backend_auth_token is None:
+            # phone number is unknown
+            self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
             return
 
         doors = self.get_doors()
