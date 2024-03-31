@@ -282,8 +282,8 @@ class PayphoneDoorManager(AbstractDoorManager):
 
         self.answer_and_wait()
 
-        # get the phone number
-        self.phone_number += self.stream_and_capture_digit('welcome')
+        # get the first digit of the phone number, overwriting the value from the constructor
+        self.phone_number = self.stream_and_capture_digit('welcome')
         digit = self.stream_and_capture_digit('enter_phone')
         while digit != '#':
             self.phone_number += digit
