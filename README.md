@@ -22,6 +22,7 @@ cp door_ivr/door_ivr.example.conf door_ivr/door_ivr.conf
 # edit door_ivr/door_ivr.conf
 
 # add entries in extensions.conf to /etc/asterisk/extensions.conf
+# add entries in features.conf /etc/asterisk/features.conf
 service asterisk restart
 # to debug asterisk -rvvv
 ```

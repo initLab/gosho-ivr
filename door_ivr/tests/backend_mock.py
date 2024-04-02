@@ -31,6 +31,30 @@ class FaunaHandler(http.server.BaseHTTPRequestHandler):
                     indent=4
                 ).encode('utf-8')
             )
+        elif self.path == '/api/current_user':
+            self.send_response(http.HTTPStatus.OK)
+            self.end_headers()
+            self.wfile.write(
+                json.dumps(
+                    {
+                        "id": 123,
+                        "name": "Some User",
+                        "url": "",
+                        "twitter": "",
+                        "username": "someuser",
+                        "github": "",
+                        "jabber": "",
+                        "picture": ".....",
+                        "locale": "bg",
+                        "announce_my_presence": False,
+                        "roles": [
+                            "member",
+                            "trusted_member",
+                        ]
+                    },
+                    indent=4
+                ).encode('utf-8')
+            )
         else:
             raise NotImplementedError(f"GET {self.path!r} is not implemented")
 
