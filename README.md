@@ -30,7 +30,7 @@ service asterisk restart
 ## Testing
 
 ```
-cd door_ivr/door_ivr/
+cd door_ivr/tests/
 python backend_mock.py &
 ./run-test.sh agi-test.txt
 ./run-test.sh agi-unknown-number.txt

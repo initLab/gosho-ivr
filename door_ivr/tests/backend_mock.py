@@ -17,6 +17,10 @@ PORT = 3002
 
 class FaunaHandler(http.server.BaseHTTPRequestHandler):
 
+    def setup(self):
+        self.server.allow_reuse_address = True
+        super().setup()
+
     def do_GET(self):
         if self.path == '/api/doors':
             self.send_response(http.HTTPStatus.OK)
