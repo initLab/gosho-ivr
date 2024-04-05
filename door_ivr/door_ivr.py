@@ -176,13 +176,13 @@ class AbstractDoorManager(AGI, abc.ABC):
             if {DOOR_UNLOCK, DOOR_OPEN}.intersection(set(door['supported_actions']))
         ] + ['9']
 
+        selection = ''
+
         while True:  # timeout handled inside
             # TODO: consider getting the door statuses when there is an API for this
-            selection = ''
             for door_number in door_action_choices:
                 if not selection:
-                    selection = self.stream_file_i18n('door_prompt_' + door_number,
-                                                      escape_digits=''.join(door_action_choices))
+                    selection = self.stream_file_i18n('door_prompt_' + door_number, escape_digits=DIGITS)
 
             if not selection:
                 selection = self.stream_file_asset('waiting_on_input', escape_digits=DIGITS)
@@ -193,11 +193,11 @@ class AbstractDoorManager(AGI, abc.ABC):
 
             if selection not in door_action_choices:
                 # wrong selection
-                self.stream_file_i18n('wrong_selection')
+                selection = self.stream_file_i18n('wrong_selection', escape_digits=DIGITS)
             elif selection == '9':
                 lockable_door_ids = [door['id'] for door in doors if DOOR_LOCK in door['supported_actions']]
                 if not lockable_door_ids:
-                    self.stream_file_i18n('lock_failed')
+                    selection = self.stream_file_i18n('lock_failed', escape_digits=DIGITS)
                 else:
                     try:
                         for door_id in lockable_door_ids:
@@ -210,7 +210,7 @@ class AbstractDoorManager(AGI, abc.ABC):
                     except requests.exceptions.RequestException as exc:
                         # TODO: check that all doors are locked when there is an API
                         self.verbose('Error locking doors - %r' % exc)
-                        self.stream_file_i18n('action_unsuccessful')
+                        selection = self.stream_file_i18n('action_unsuccessful', escape_digits=DIGITS)
                         # we don't want to hang up - the user can retry
             else:
                 door = doors_map[int(selection)]
@@ -218,10 +218,10 @@ class AbstractDoorManager(AGI, abc.ABC):
                     for action in [DOOR_UNLOCK, DOOR_OPEN]:
                         if action in door['supported_actions']:
                             self.perform_door_action(door['id'], action)
-                    self.stream_file_i18n('door_opened_' + selection)
+                    selection = self.stream_file_i18n('door_opened_' + selection, escape_digits=DIGITS)
                 except requests.exceptions.RequestException as exc:
                     self.verbose('Error opening the door %r - %r' % (door, exc))
-                    self.stream_file_i18n('action_unsuccessful')
+                    selection = self.stream_file_i18n('action_unsuccessful', escape_digits=DIGITS)
 
     @abc.abstractmethod
     def handle_phone_call(self):
