@@ -46,40 +46,40 @@ WAIT FOR DIGIT 4000
 WAIT FOR DIGIT 4000
     RESULT_LINE: 200 result=35
     RESULT_DICT: {'result': ('35', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "0123456789" 0
     RESULT_LINE: 200 result=49
     RESULT_DICT: {'result': ('49', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_1 "" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_1 "" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_1 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_1 "0123456789" 0
     RESULT_LINE: 200 result=0
     RESULT_DICT: {'result': ('0', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "0123456789" 0
     RESULT_LINE: 200 result=0
     RESULT_DICT: {'result': ('0', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "1239" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "1239" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "0123456789" 0
     RESULT_LINE: 200 result=0
     RESULT_DICT: {'result': ('0', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "1239" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "1239" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "0123456789" 0
     RESULT_LINE: 200 result=50
     RESULT_DICT: {'result': ('50', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_2 "" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_2 "" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_2 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_2 "0123456789" 0
     RESULT_LINE: 200 result=0
     RESULT_DICT: {'result': ('0', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "0123456789" 0
     RESULT_LINE: 200 result=0
     RESULT_DICT: {'result': ('0', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "1239" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "1239" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "0123456789" 0
     RESULT_LINE: 200 result=0
     RESULT_DICT: {'result': ('0', '')}
-    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "1239" 0
-STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "1239" 0
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "0123456789" 0
     RESULT_LINE: 200 result=57
     RESULT_DICT: {'result': ('57', '')}
     COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_locked "" 0
