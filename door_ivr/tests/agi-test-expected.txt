@@ -1,0 +1,96 @@
+ARGS: ['../door_ivr.py', '--handler=external', '--config=../door_ivr.test.conf']
+ENV LINE: agi_callerid: 0881234567
+ENV LINE: 
+class AGI: self.env = {'agi_callerid': '0881234567'}
+    COMMAND: VERBOSE "External phone door IVR received a call from '0881234567'" 1
+VERBOSE "External phone door IVR received a call from '0881234567'" 1
+    RESULT_LINE: 200 result=1
+    RESULT_DICT: {'result': ('1', '')}
+    COMMAND: ANSWER
+ANSWER
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/welcome "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/welcome "0123456789" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/enter_pin "0123456789" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/enter_pin "0123456789" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: WAIT FOR DIGIT 12000
+WAIT FOR DIGIT 12000
+    RESULT_LINE: 200 result=49
+    RESULT_DICT: {'result': ('49', '')}
+    COMMAND: WAIT FOR DIGIT 4000
+WAIT FOR DIGIT 4000
+    RESULT_LINE: 200 result=50
+    RESULT_DICT: {'result': ('50', '')}
+    COMMAND: WAIT FOR DIGIT 4000
+WAIT FOR DIGIT 4000
+    RESULT_LINE: 200 result=51
+    RESULT_DICT: {'result': ('51', '')}
+    COMMAND: WAIT FOR DIGIT 4000
+WAIT FOR DIGIT 4000
+    RESULT_LINE: 200 result=52
+    RESULT_DICT: {'result': ('52', '')}
+    COMMAND: WAIT FOR DIGIT 4000
+WAIT FOR DIGIT 4000
+    RESULT_LINE: 200 result=53
+    RESULT_DICT: {'result': ('53', '')}
+    COMMAND: WAIT FOR DIGIT 4000
+WAIT FOR DIGIT 4000
+    RESULT_LINE: 200 result=54
+    RESULT_DICT: {'result': ('54', '')}
+    COMMAND: WAIT FOR DIGIT 4000
+WAIT FOR DIGIT 4000
+    RESULT_LINE: 200 result=35
+    RESULT_DICT: {'result': ('35', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+    RESULT_LINE: 200 result=49
+    RESULT_DICT: {'result': ('49', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_1 "" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_1 "" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "1239" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "1239" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "1239" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "1239" 0
+    RESULT_LINE: 200 result=50
+    RESULT_DICT: {'result': ('50', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_2 "" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_opened_2 "" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_1 "1239" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "1239" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_2 "1239" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "1239" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_prompt_3 "1239" 0
+    RESULT_LINE: 200 result=57
+    RESULT_DICT: {'result': ('57', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_locked "" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/door_locked "" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/goodbye "" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/goodbye "" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: HANGUP
+HANGUP
+    RESULT_LINE: 200
+    RESULT_DICT: {'result': ('', '')}

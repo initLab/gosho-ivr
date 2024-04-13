@@ -1,0 +1,29 @@
+name: Push Workflow
+
+on: push
+
+jobs:
+  run_tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Requirements
+        run: pip install -r door_ivr/requirements.txt
+      - name: Run tests
+        working-directory: door_ivr/tests/
+        timeout-minutes: 1
+        run: >
+          python backend_mock.py &
+          sleep 1 &&
+          echo "=== TEST RUN NORMAL ===" &&
+          ./run-test.sh agi-test.txt 2>&1 | tee agi-test-result.txt &&
+          echo "=== TEST UNKNOWN NUMBER ===" &&
+          ./run-test.sh agi-unknown-number.txt 2>&1 | tee agi-test-unknown-number-result.txt
+      - name: Compare results
+        working-directory: door_ivr/tests/
+        run: >
+          echo "=== COMPARE RUN NORMAL ===" &&
+          diff -U 3 agi-test-expected.txt agi-test-result.txt &&
+          echo "=== COMPARE UNKNOWN NUMBER ===" &&
+          diff -U 3 agi-test-unknown-number-expected.txt agi-test-unknown-number-result.txt

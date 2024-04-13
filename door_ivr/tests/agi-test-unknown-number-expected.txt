@@ -1,0 +1,32 @@
+ARGS: ['../door_ivr.py', '--handler=external', '--config=../door_ivr.test.conf']
+ENV LINE: agi_callerid: +359880000000
+ENV LINE: 
+class AGI: self.env = {'agi_callerid': '+359880000000'}
+    COMMAND: VERBOSE "External phone door IVR received a call from '+359880000000'" 1
+VERBOSE "External phone door IVR received a call from '+359880000000'" 1
+    RESULT_LINE: 200
+    RESULT_DICT: {'result': ('', '')}
+    COMMAND: GET VARIABLE "FALLBACK_EXTENSION"
+GET VARIABLE "FALLBACK_EXTENSION"
+    RESULT_LINE: 200
+    RESULT_DICT: {'result': ('', '')}
+    COMMAND: ANSWER
+ANSWER
+    RESULT_LINE: 200
+    RESULT_DICT: {'result': ('', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/welcome "" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/welcome "" 0
+    RESULT_LINE: 200 result=101
+    RESULT_DICT: {'result': ('101', '')}
+    COMMAND: STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/redirecting_to_public_phone "" 0
+STREAM FILE /home/runner/work/initlab-telephony/initlab-telephony/door_ivr/tests/initlab-telephony-assets/files/bg/redirecting_to_public_phone "" 0
+    RESULT_LINE: 200 result=0
+    RESULT_DICT: {'result': ('0', '')}
+    COMMAND: SET EXTENSION 1234
+SET EXTENSION 1234
+    RESULT_LINE: 200
+    RESULT_DICT: {'result': ('', '')}
+    COMMAND: set priority 1
+set priority 1
+    RESULT_LINE: 200
+    RESULT_DICT: {'result': ('', '')}
