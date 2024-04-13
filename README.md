@@ -37,6 +37,16 @@ python backend_mock.py &
 ./run-test.sh -  # for local testing
 ```
 
+### Manual Testing
+
+- run `docker compose up --build` - this will start a docker asterisk instance (port 5060/tcp) that has a mock backend and IVR config
+- use a SIP application to connect `sip:0881234567@127.0.0.1:5060(tcp)` with password `1234` (see `docker/initlab-telephony-demo.dockerfile` ) and dial `ivr`
+  - if you want to hear the sound you will need to substitute `127.0.0.1` with the address of the docker container
+    - to get the docker ip you can use the following command `docker-compose exec asterisk-initlab-telephony bash -c 'ip a | grep 172'`
+  - to execute things in the container `docker-compose exec asterisk-initlab-telephony asterisk -rvvvdd`
+
 ## TODOs:
 
-- Document in a better way and automate.
+- Document better and automate.
+- Better tests.
+- Document how to test the other handlers.
