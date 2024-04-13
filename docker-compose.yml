@@ -1,0 +1,11 @@
+services:
+  asterisk-initlab-telephony:
+    build:
+      context: .
+      dockerfile: ./docker/initlab-telephony-demo.dockerfile
+    stop_signal: SIGKILL  # we don't care about graceful shutdown and we don't want to wait
+    volumes:
+      - ../initlab-telephony-assets/:/var/lib/asterisk/initlab-telephony-assets/
+    ports:
+      - 127.0.0.1:5060:5060/tcp
+      - 127.0.0.1:5060:5060/udp
