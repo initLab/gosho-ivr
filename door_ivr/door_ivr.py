@@ -350,6 +350,8 @@ class InternalPhoneDoorManager(AbstractDoorManager):
             self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
             return
 
+        self.user_locale = self.get_user_locale()
+
         doors = self.get_doors()
 
         if not any(door['supported_actions'] for door in doors):
@@ -387,6 +389,8 @@ class InCallDoorManager(AbstractDoorManager):
             # phone number is unknown
             self.answer_wait_greet_stream_and_end_call('insufficient_permissions')
             return
+
+        self.user_locale = self.get_user_locale()
 
         doors = self.get_doors()
 
